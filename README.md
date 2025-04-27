@@ -118,3 +118,4 @@ You now have a Laravel 12 project with Breeze authentication and Vue 3 (via Vite
 
 **Happy Coding!** 🔥
 
+**Ahsan Danish!**
