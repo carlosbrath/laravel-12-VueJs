@@ -44,19 +44,33 @@ const totalAmount = computed(() => {
 });
 const invoiceContent = ref(null);
 const downloadPDF = () => {
-    // You can use libraries like html2pdf.js or jspdf here
-    const element = invoiceContent.value; // if using <script setup>
+    const element = invoiceContent.value;
+    if (!element) {
+        alert("Invoice content not found.");
+        return;
+    }
+
     const opt = {
         margin: 0.3,
-        filename: `invoice-${form.invoice_number || 'untitled'}.pdf`,
+        filename: `invoice-${form.value.invoice_number || 'untitled'}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2 },
         jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
     };
 
     html2pdf().set(opt).from(element).save();
-
 };
+const handleLogoUpload = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+        form.value.logoUrl = reader.result; // Set base64 data to logoUrl
+    };
+    reader.readAsDataURL(file);
+};
+
 
 const saveDefaultCurrency = () => {
     // Save logic can be implemented
@@ -128,13 +142,13 @@ const submitInvoice = () => {
             <div class="max-w-6xl mx-auto flex flex-col md:flex-row gap-6">
                 <div class="w-full md:w-4/5">
                     <!-- Top: Logo & Invoice Meta -->
-                    <div ref="invoiceContent" class="bg-white p-6 rounded-lg shadow">
+                    <div  class="bg-white p-6 rounded-lg shadow">
                         <div class="flex flex-col md:flex-row justify-between items-start gap-6">
 
                             <!-- Logo Upload -->
                             <div class="w-full md:w-1/2">
                                 <label class="block text-sm font-semibold mb-1">Add Your Logo</label>
-                                <input type="file"
+                                <input type="file"  @change="handleLogoUpload" accept="image/*"  
                                     class="block w-full text-sm border border-dashed border-gray-400 p-4 rounded-lg" />
                             </div>
 
@@ -295,7 +309,72 @@ const submitInvoice = () => {
                 </div>
             </div>
             <!-- Sidebar Section -->
+            <!-- Invoice Preview Hidden -->
+            <div id="invoice-preview" ref="invoiceContent" class="hidden print:block">
+                <div class="p-6 border rounded-md text-sm">
+                    <div class="flex justify-between">
+                        <div>
+                           <img :src="form.logoUrl" class="h-16" v-if="form.logoUrl" />
+                            <p class="font-bold mt-2">{{ form.from }}</p>
+                        </div>
+                        <div class="text-right">
+                            <p><strong>Invoice #:</strong> {{ form.invoice_number }}</p>
+                            <p><strong>Date:</strong> {{ form.issue_date }}</p>
+                            <p><strong>Due:</strong> {{ form.due_date }}</p>
+                            <p><strong>PO Number:</strong> {{ form.po_number }}</p>
+                        </div>
+                    </div>
 
+                    <hr class="my-4">
+
+                    <div class="flex justify-between mb-4">
+                        <div>
+                            <p class="font-bold">Bill To:</p>
+                            <p>{{ form.client_name }}</p>
+                        </div>
+                        <div>
+                            <p class="font-bold">Ship To:</p>
+                            <p>{{ form.client_email }}</p>
+                        </div>
+                    </div>
+
+                    <table class="w-full text-left border-t border-b text-xs">
+                        <thead>
+                            <tr class="bg-gray-200">
+                                <th class="p-2">Item</th>
+                                <th class="p-2 text-right">Qty</th>
+                                <th class="p-2 text-right">Rate</th>
+                                <th class="p-2 text-right">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="(item, index) in form.items" :key="index">
+                                <td class="p-2">{{ item.description }}</td>
+                                <td class="p-2 text-right">{{ item.quantity }}</td>
+                                <td class="p-2 text-right">${{ item.unit_price.toFixed(2) }}</td>
+                                <td class="p-2 text-right">${{ (item.quantity * item.unit_price).toFixed(2) }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="mt-4 text-sm text-right space-y-1">
+                        <p><strong>Subtotal:</strong> ${{ subtotalAmount }}</p>
+                        <p><strong>Discount:</strong> {{ form.discount }}%</p>
+                        <p><strong>Tax:</strong> {{ form.tax }}%</p>
+                        <p><strong>Total:</strong> ${{ totalAmount }}</p>
+                    </div>
+
+                    <div class="mt-4">
+                        <p><strong>Notes:</strong></p>
+                        <p>{{ form.notes }}</p>
+                    </div>
+
+                    <div class="mt-2">
+                        <p><strong>Terms:</strong></p>
+                        <p>{{ form.terms }}</p>
+                    </div>
+                </div>
+            </div>
 
         </section>
 
