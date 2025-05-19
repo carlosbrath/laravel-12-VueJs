@@ -36,7 +36,7 @@ const submit = () => {
         <LeftSideSlider />
   
       <!-- Right side form -->
-      <div class="w-full lg:w-1/2 flex items-center justify-center bg-gray-100">
+      <div class="w-full lg:w flex items-center justify-center bg-gray-100">
         <NewGuestLayout>
           <Head title="Log in" />
   
